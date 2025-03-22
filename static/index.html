@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Deep Space Image Explorer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>🌌 Deep Space Image Explorer</h2>
+    <label for="sourceSelect">Select Source:</label>
+    <select id="sourceSelect">
+      <option value="nasa">NASA</option>
+      <option value="hubble">Hubble</option>
+      <option value="jwst">JWST</option>
+    </select>
+
+    <label for="querySelect">Choose Object Type:</label>
+    <select id="querySelect">
+      <option value="deep space">All</option>
+      <option value="galaxy">Galaxy</option>
+      <option value="nebula">Nebula</option>
+      <option value="supernova">Supernova</option>
+      <option value="exoplanet">Exoplanet</option>
+      <option value="star cluster">Star Cluster</option>
+    </select>
+
+    <label for="customSearch">Or Search:</label>
+    <input type="text" id="customSearch" placeholder="e.g. Orion Nebula" />
+
+    <button onclick="fetchImage()">Get Image</button>
+    <label class="switch">
+      <input type="checkbox" id="darkToggle" onchange="toggleDarkMode()">
+      <span class="slider round"></span> Dark Mode
+    </label>
+
+    <div id="loading" style="display:none;">
+      <p>Loading image...</p>
+      <img src="https://i.gifer.com/ZKZg.gif" width="60" />
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    function fetchImage(page = 1) {
+      currentPage = page;
+      const query = document.getElementById('customSearch').value || document.getElementById('querySelect').value;
+      const source = document.getElementById('sourceSelect').value;
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('result').innerHTML = '';
+      fetch(`/get_image?query=${encodeURIComponent(query)}&source=${source}&page=${currentPage}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('loading').style.display = 'none';
+          if (data.error) {
+            document.getElementById('result').innerHTML = `<p>${data.error}</p>`;
+          } else {
+            document.getElementById('result').innerHTML = `
+              <img src="${data.image_url}" alt="Image" width="500"><br>
+              <b>Source:</b> ${data.source}<br>
+              <b>Title:</b> ${data.title}<br>
+              <b>Date:</b> ${data.date}<br>
+              <p>${data.description}</p>
+              <a href="${data.image_url}" download target="_blank">
+                <button>Download Image</button>
+              </a>
+              <div class="pagination">
+                <button onclick="changePage(-1)">Previous</button>
+                <button onclick="changePage(1)">Next</button>
+              </div>
+            `;
+          }
+        });
+    }
+
+    function changePage(step) {
+      const nextPage = currentPage + step;
+      if (nextPage < 1) return;
+      fetchImage(nextPage);
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+      document.querySelector(".container").classList.toggle("dark-container");
+    }
+  </script>
+</body>
+</html>
